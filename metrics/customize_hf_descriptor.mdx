@@ -1,0 +1,126 @@
+---
+title: 'Use HuggingFace models'
+description: 'How to use models from HuggingFace as evaluators.'
+---
+
+You can score your text by downloading and using ML models from HuggingFace. This lets you apply any criteria from the source model, e.g. classify texts by emotion. There are:
+
+* Ready-to-use descriptors that wrap a specific model,
+
+* A general interface to call other suitable models you select.
+
+**Pre-requisites**:
+
+* You know how to use [descriptors](/docs/library/descriptors) to evaluate text data.
+
+## Imports
+
+```python
+from servequery.descriptors import HuggingFace, HuggingFaceToxicity
+```
+
+<Accordion title="Toy data to run the example" defaultOpen={false}>
+  To generate toy data and create a Dataset object:
+
+  ```python
+  import pandas as pd
+
+  from servequery import Dataset
+  from servequery import DataDefinition
+
+  data = [
+      ["Why is the sky blue?", 
+       "The sky is blue because molecules in the air scatter blue light from the sun more than they scatter red light.", 
+       "because air scatters blue light more"],
+      ["How do airplanes stay in the air?", 
+       "Airplanes stay in the air because their wings create lift by forcing air to move faster over the top of the wing than underneath, which creates lower pressure on top.", 
+       "because wings create lift"],
+      ["Why do we have seasons?", 
+       "We have seasons because the Earth is tilted on its axis, which causes different parts of the Earth to receive more or less sunlight throughout the year.", 
+       "because Earth is tilted"],
+      ["How do magnets work?", 
+       "Magnets work because they have a magnetic field that can attract or repel certain metals, like iron, due to the alignment of their atomic particles.", 
+       "because of magnetic fields"],
+      ["Why does the moon change shape?", 
+       "The moon changes shape, or goes through phases, because we see different portions of its illuminated half as it orbits the Earth.", 
+       "because it rotates"],
+      ["What movie should I watch tonight?", 
+       "A movie is a motion picture created to entertain, educate, or inform viewers through a combination of storytelling, visuals, and sound.", 
+       "watch a movie that suits your mood"]
+  ]
+
+  columns = ["question", "context", "response"]
+
+  df = pd.DataFrame(data, columns=columns)
+
+  eval_df = Dataset.from_pandas(
+    df,
+    data_definition=DataDefinition())
+  ```
+</Accordion>
+
+## Built-in ML evals
+
+<Tip>
+  **Available descriptors**. Check all available built-in LLM evals in the [reference table](/metrics/all_descriptors#ml-based-evals).
+</Tip>
+
+There are built-in evaluators for some models. You can call them like any other descriptor:
+
+```python
+eval_df.add_descriptors(descriptors=[
+    HuggingFaceToxicity("question", toxic_label="hate", alias="Toxicity") 
+])
+```
+
+## Custom ML evals
+
+<Info>
+  You can also add any custom checks [directly as a Python function](/metrics/customize_descriptor).
+</Info>
+
+Alternatively, use the general `HuggingFace()` descriptor to call a specific named model. The model you use must return a numerical score or a category for each text in a column.
+
+For example, to evaluate "curiousity" expressed in a text:
+
+```python
+eval_df.add_descriptors(descriptors=[
+   HuggingFace("question",
+       model="SamLowe/roberta-base-go_emotions", 
+       params={"label": "curiosity"},
+       alias="Curiousity"
+   )
+])
+```
+
+Call the result as usual:
+
+```python
+eval_df.as_dataframe()
+```
+
+Example output:
+
+![](/images/examples/hf_descriptor_example_toxicity-min.png)
+
+### Sample models
+
+Here are some models you can call using the `HuggingFace()` descriptor.
+
+| Model                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Example use                                                                                                                                                            | Parameters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Emotion classification** <br /> <ul><li> Scores texts by 28 emotions. </li><li> Returns the predicted probability for the chosen emotion label. </li><li> Scale: 0 to 1. </li><li>[HuggingFace Model](https://huggingface.co/SamLowe/roberta-base-go_emotions) </li></ul>                                                                                                                                                                                                                                              | `HuggingFace("response", model="SamLowe/roberta-base-go_emotions", params={"label": "disappointment"}, alias="disappointment")`                                        | **Required**:<ul><li> `params={"label":"label"}`</li></ul>**Available labels**:<ul><li>admiration</li><li>amusement</li><li>anger</li><li>annoyance</li><li>approval</li><li>caring</li><li>confusion</li><li>curiosity</li><li>desire</li><li>disappointment</li><li>disapproval</li><li>disgust</li><li>embarrassment</li><li>excitement</li><li>fear</li><li>gratitude</li><li>grief</li><li>joy</li><li>love</li><li>nervousness</li><li>optimism</li><li>pride</li><li>realization</li><li>relief</li><li>remorse</li><li>sadness</li><li>surprise</li><li>neutral</li></ul>**Optional**:<ul><li>`alias="name"`</li></ul> |
+| **Zero-shot classification** <br /><ul><li>A natural language inference model. </li><li>Use it for zero-shot classification by user-provided topics.</li><li> List candidate topics as `labels`. You can provide one or several topics. </li><li> You can set a classification threshold: if the predicted probability is below, an "unknown" label will be assigned. </li><li> Returns a label. </li><li>[HuggingFace Model](https://huggingface.co/MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli)</li></ul> | `HuggingFace("response", model="MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli", params={"labels": ["science", "physics"], "threshold":0.5}, alias="Topic")` | **Required**: <ul><li>`params={"labels": ["label"]}`</li></ul> **Optional**:<ul><li> `params={"score_threshold": 0.7}` (default: 0.5)</li><li> `alias="name"`</li></ul>                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **GPT-2 text detection** <br /><ul><li> Predicts if a text is Real or Fake (generated by a GPT-2 model). </li><li> You can set a classification threshold: if the predicted probability is below, an "unknown" label will be assigned. </li><li> Note that it is not usable as a detector for more advanced models like ChatGPT.  </li><li> Returns a label. </li><li> [HuggingFace Model](https://huggingface.co/openai-community/roberta-base-openai-detector)  </li></ul>                                             | `HuggingFace("response", model="openai-community/roberta-base-openai-detector", params={"score_threshold": 0.7}, alias="fake")`                                        | **Optional**:<ul><li>`params={"score_threshold": 0.7}` (default: 0.5)</li><li> `alias="name"`</li></ul>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+
+This list is not exhaustive, and the Descriptor may support other models published on Hugging Face. The implemented interface generally works for models that:
+
+* Output a single number (e.g., predicted score for a label) or a label, **not** an array of values.
+
+* Can process raw text input directly.
+
+* Name labels using `label` or `labels` fields.
+
+* Use methods named `predict` or `predict_proba` for scoring.
+
+However, since each model is implemented differently, we cannot provide a complete list of models with a compatible interface. We suggest testing the implementation on your own using trial and error.  You can also open an issue on GitHub to request support for a specific model.

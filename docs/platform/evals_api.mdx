@@ -1,0 +1,74 @@
+---
+title: 'Run evals via API'
+description: 'How to run evals and log them on the platform'
+---
+
+![](/images/evals_flow_python.png)
+
+This relies on the core evaluation API of the ServeQuery Python library. Check the [detailed guide](/docs/library/evaluations_overview).
+
+## Simple Example
+
+<Tip>
+  You must first connect to [ServeQuery Cloud](/docs/setup/cloud) and [create a Project](/docs/platform/projects_manage).
+</Tip>
+
+To run a single eval with text evaluation results uploaded to a workspace:
+
+```python
+eval_data = Dataset.from_pandas(
+    source_df,
+    data_definition=DataDefinition()
+)
+
+report = Report([
+    TextEvals()
+])
+
+my_eval = report.run(eval_data, None)
+ws.add_run(project.id, my_eval, include_data=True)
+```
+
+## Workflow
+
+The complete workflow looks as the following.
+
+<Steps>
+  <Step title="Run a Report">
+    Configure the evals and run the [ServeQuery Report](/docs/library/report) with optional [Test ](/docs/library/tests)conditions.
+  </Step>
+
+  <Step title="Upload to the platform">
+    Upload the raw data or only the evaluation results.
+  </Step>
+
+  <Step title="Explore the results">
+    Go to the Explore view inside your Project to debug the results and compare the outcomes between runs. Understand the [Explore view](/docs/platform/evals_explore).
+  </Step>
+
+  <Step title="(Optional) Set up a Dashboard">
+    Set a Dashboard to track results over time. This helps you monitor metric changes across experiments or results of ongoing safety Tests. Check the docs on [Dashboard](/docs/platform/dashboard_overview).
+  </Step>
+
+  <Step title="(Optional) Configure alerts">
+    Optionally, configure alerts on failed Tests. Check the section on [Alerts](/docs/platform/alerts).
+  </Step>
+</Steps>
+
+## Uploading data
+
+<Check>
+  Raw data upload is available only for ServeQuery Cloud and Enterprise.
+</Check>
+
+When you upload a Report, you can decide to:
+
+* include only the resulting Metrics and a summary Report (with distribution summaries, etc.), or
+
+* also upload the raw Dataset you evaluated, together with added Descriptors if any. This helps with row-level debugging and analysis.
+
+Use`include_data` (default `False`) to specify whether to include the data.
+
+```python
+ws.add_run(project.id, my_eval, include_data=False)
+```

@@ -1,0 +1,50 @@
+---
+title: "ServeQuery Cloud"
+description: "How to set up ServeQuery Cloud account."
+icon: "cloud"
+---
+
+## 1. Create an Account
+
+- If not yet, sign up for a [free ServeQuery Cloud account](https://app.servequery.cloud/signup).
+- After logging in, create an **Organization** and name it.
+
+## 2. Connect from Python
+
+<Info>
+  You need this for programmatic tasks like tracing or logging local evals. Many other tasks can be done directly on the platform.
+</Info>
+
+### Get a Token
+
+Click the **Key** menu icon to open the [Token page](https://app.servequery.cloud/token). Generate and save token securely.
+
+### Install ServeQuery
+
+[Install](/docs/setup/installation) the ServeQuery Python library.
+
+```python
+pip install servequery ## or pip install servequery[llm]
+```
+
+### Connect
+
+Import the cloud workspace and pass your API token to connect:
+
+```python
+from servequery.ui.workspace import CloudWorkspace
+
+ws = CloudWorkspace(
+token="API_KEY",
+url="https://app.servequery.cloud")
+```
+
+<Note>
+For ServeQuery 0.6.7 and ServeQuery Cloud v1, use `from servequery.ui.workspace.cloud import CloudWorkspace`. [Read more](/faq/cloud_v2).
+</Note>
+
+<Check>
+  You can also provide the API key by setting the environment variable `SERVEQUERY_API_KEY`.
+</Check>
+
+You are all set\! Create a Project and run your first [evaluation](/quickstart_llm).

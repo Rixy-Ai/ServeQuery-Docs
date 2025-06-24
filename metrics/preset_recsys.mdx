@@ -1,0 +1,91 @@
+---
+title: "Recommendations"
+description: "Overview of the Recommender Systems Preset"
+---
+
+<Warning>
+  This Preset is **coming soon** to the new ServeQuery API! Check the old docs for now.
+</Warning>
+
+**Report.** To run a Preset on your data for a single current dataset for top-k recommendations:
+
+```python
+report = Report([
+    RecSysPreset(k=5),
+])
+
+my_eval = report.run(current, None)
+```
+
+**Test Suite**. To add pass/fail ranking quality Tests, auto-generated from the `ref` dataset:
+
+```python
+report = Report([
+    RecSysPreset(k=5),
+],
+include_tests=True)
+
+my_eval = report.run(current, ref)
+```
+
+## Overview
+
+`RecsysPreset` evaluates the quality of the recommender system by generating multiple metrics to assess the quality of ranking and diversity of recommendations. You must provide the `k` parameter to evaluate the Top-K recommendations.
+
+![](/images/metrics/preset_recsys-min.png)
+
+It includes 10+ metrics like NDCG at K, MAP at K, HitRate, diversity, serendipity, etc. Metric selection depends on the provided data since some of the Metrics require additional dataset (training data) or item / user features.
+
+<Info>
+  **Metric explainers.** Check the [Ranking and RecSys Metrics](/metrics/explainer_recsys) to see how each Metric works.
+</Info>
+
+**Test Suite**. If you enable Tests, this will automatically run checks to assess if the model performance metrics are within bounds.
+
+![](/images/metrics/test_preset_recsys-min.png)
+
+Tests are auto-generated **based on reference dataset**. If the reference dataset is provided, conditions like expected ranking accuracy will be derived from it.
+
+<Info>
+  **How Tests work.** Read about [Tests](/docs/library/tests) and check defaults for each Test in the [reference table](/metrics/all_metrics).
+</Info>
+
+## Use case
+
+These Presets are useful in various scenarios:
+
+* **Experimental evaluations** as you iterate on building your recommender system.
+
+* **Side-by-side comparison** for two different models or periods.&#x20;
+
+* **Production monitoring** checks after you acquire ground truth labels.&#x20;
+
+* **Debugging**. If you notice a drop in performance, use the visual Report to understand changes.
+
+## Data requirements
+
+* **Prediction.** Recommended items with rank or score.
+
+* **Target**. True relevance score or interaction result.
+
+* (Optional) **Input/user features**. For some diversity metrics.
+
+* (Optional) **Training data**. For some diversity metrics.
+
+* (Optional) **Reference dataset**. To get a side-by-side comparison or auto-generate test conditions.
+
+<Info>
+  **Data schema mapping.** Use the [data definition](/docs/library/data_definition) to map your input data.
+</Info>
+
+## Report Customization
+
+You can customize the Report in several ways:
+
+* **Change Test conditions**. To modify the auto-generated conditions, you can set yours: either a different condition relative to the reference or any custom conditions.
+
+* **Modify Report composition**. You can add additional metrics, such as compute Data Drift for user or item feature distributions, or to evaluate prediction drift.
+
+<Info>
+  **Custom Report**. Check how to create a [Report](/docs/library/report) and add [Tests](/docs/library/tests) conditions.
+</Info>

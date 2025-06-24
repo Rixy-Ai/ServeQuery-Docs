@@ -1,0 +1,277 @@
+---
+title: "Add dashboard panels (API)"
+description: "How to design your Dashboard with custom Panels."
+---
+
+You can add Panels in the user interface or using Python API. This pages describes the Python API. Check how to [add panels in the UI](dashboard_add_panels_ui).
+
+## Dashboard Management
+
+<Check>
+  Dashboards as code are available in ServeQuery OSS, Cloud, Enterprise.
+</Check>
+
+<Tip>
+  You must first connect to [ServeQuery Cloud](/docs/setup/cloud) and [create a Project](/docs/platform/projects_manage).
+</Tip>
+
+**Adding Tabs**. To add a new Tab:
+
+```python
+project.dashboard.add_tab("Another Tab")
+```
+
+You can also create a new Tab while adding a Panel as shown below. If the destination Tab doesn't exist, it will be created. If it does, the Panel will be added below existing ones in that Tab.
+
+**Deleting Tabs**. To delete a Tab:
+
+```python
+project.dashboard.delete_tab("Another Tab")
+```
+
+**Deleting Panels**. To delete a specific Panel:
+
+```python
+project.dashboard.delete_panel("Dashboard title", "My new tab")
+```
+
+(First list the Panel name, then the Tab name).
+
+**[DANGER]. Delete Dashboard**. To delete all Tabs and Panels on the Dashboard:
+
+```python
+project.dashboard.clear_dashboard()
+```
+
+Note: This does **not** delete the underlying Reports or dataset; it only clears the Panels.
+
+## Adding Panels
+
+Imports:
+
+```
+from servequery.sdk.models import PanelMetric
+from servequery.sdk.panels import DashboardPanelPlot
+```
+
+You can add multiple Panels at once: they will appear in the listed order.
+
+### Text
+
+Text-only panels are perfect for titles.
+
+**Add a text panel**. Add a new text panel to the specified Tab.
+
+```python
+project.dashboard.add_panel(
+    DashboardPanelPlot(
+        title="Dashboard title",
+        size="full", 
+        values=[], #leave empty
+        plot_params={"plot_type": "text"},
+    ),
+    tab="My new tab", #will create a Tab if there is no Tab with this name
+)
+```
+
+### Counters
+
+Counter panels show a value with optional supporting text.
+
+<CardGroup cols={2}>
+  <Card title="Text counter" img="/images/dashboard/panel_counter_example-min.png">
+    Shows the specified value(s) and optional text.
+  </Card>
+  <Card title="Pie chart" img="/images/dashboard/panel_pie_chart.png">
+    Shows the specified value(s) in a pie chart.
+  </Card>
+</CardGroup>
+
+**Add Counters**. To add panels for the `RowCount` metric with different aggregations:
+
+```python
+# Sum
+project.dashboard.add_panel(
+    DashboardPanelPlot(
+        title="Row count",
+        subtitle="Total number of evaluations over time.",
+        size="half",
+        values=[PanelMetric(legend="Row count", metric="RowCount")],
+        plot_params={"plot_type": "counter", "aggregation": "sum"},
+    ),
+    tab="My tab",
+)
+
+# Average
+project.dashboard.add_panel(
+    DashboardPanelPlot(
+        title="Row count",
+        subtitle="Average number of evaluations per Report.",
+        size="half",
+        values=[PanelMetric(legend="Row count", metric="RowCount")],
+        plot_params={"plot_type": "counter", "aggregation": "avg"},
+    ),
+    tab="My tab",
+)
+
+# Last
+project.dashboard.add_panel(
+    DashboardPanelPlot(
+        title="Row count",
+        subtitle="Latest number of evaluations.",
+        size="half",
+        values=[PanelMetric(legend="Row count", metric="RowCount")],
+        plot_params={"plot_type": "counter", "aggregation": "last"},
+    ),
+    tab="My tab",
+)
+```
+
+**Add pie charts**. You can use the same aggregation params (`sum`, `last`, `avg`).
+
+```python
+project.dashboard.add_panel(
+    DashboardPanelPlot(
+        title="Row count",
+        subtitle="Total number of evaluations over time.",
+        size="half",
+        values=[PanelMetric(legend="Row count", metric="RowCount")],
+        plot_params={"plot_type": "pie", "aggregation": "sum"},
+    ),
+    tab="My tab",
+)
+```
+
+### Plots
+
+These Panels display values as bar or line plots.
+
+<CardGroup cols={3}>
+  <Card title="Line chart" img="/images/dashboard/panel_line_chart.png">
+    Shows the selected values over time. You can add multiple series to the same chart as multiple lines.
+  </Card>
+  <Card title="Bar chart (stacked)" img="/images/dashboard/panel_dist_stacked_2-min.png">
+    Shows selected values or distributions over time (if stored in each Report). Stacked in a single bar.
+  </Card>
+  <Card title="Bar chart (grouped)" img="/images/dashboard/panel_dist_group_2-min.png">
+    Shows selected values or distributions over time (if stored in each Report). Multiple bars.
+  </Card>
+</CardGroup>
+
+**Add Plots**. To add time series panels for the `RowCount` metric.
+
+```python
+# line chart
+project.dashboard.add_panel(
+             DashboardPanelPlot(
+                title="Row count",
+                subtitle = "Number of evaluations over time.",
+                size="half",
+                values=[
+                    PanelMetric(
+                        legend="Row count",
+                        metric="RowCount",
+                    ),
+                ],
+                plot_params={"plot_type": "line"},
+            ),
+            tab="My tab",
+        )
+        
+# bar chart
+project.dashboard.add_panel(
+             DashboardPanelPlot(
+                title="Row count",
+                subtitle = "Number of evaluations over time.",
+                size="half",
+                values=[
+                    PanelMetric(
+                        legend="Row count",
+                        metric="RowCount",
+                    ),
+                ],
+                plot_params={"plot_type": "bar", "is_stacked": False}, #default False, set as True to get stacked bars
+            ),
+            tab="My tab",
+        )
+```
+
+**Multiple values**. A single Panel can show multiple values. For example, this will add multiple lines on a Line chart:
+
+```python
+project.dashboard.add_panel(
+    DashboardPanelPlot(
+        title="Text Length",
+        subtitle="Text length stats (symbols).",
+        size="full",
+        values=[
+            PanelMetric(legend="max", metric="MaxValue", metric_labels={"column": "length"}),
+            PanelMetric(legend="mean", metric="MeanValue", metric_labels={"column": "length"}),
+            PanelMetric(legend="min", metric="MinValue", metric_labels={"column": "length"}),
+        ]
+    )
+)
+```
+
+## Configuring Panel values
+
+To plot values in a Panel, reference the name of an ServeQuery Metric included in the Reports logged to your Project. If the metric isn't present, the Panel will be empty.
+
+- **Dataset-level Metrics**: pass the Metric name directly to `PanelMetric`, e.g., `"RowCount"`.
+- **Presets** (like `TextEvals`). Even when using a Preset, you must still reference the exact Metric inside it — such as `UniqueValueCount` or `QuantileValue`. (See the [All Metrics Reference Table](/metrics/all_metrics) for a full list of Metrics).
+- **Column-level Metrics**. If the Metric operates on a specific column, use `metric_labels` to specify it.  This also applies to text descriptors logged using TextEvals.
+
+Example:
+
+```python
+# bar chart with stacked values
+project.dashboard.add_panel(
+             DashboardPanelPlot(
+                title="Denials",
+                subtitle = "Number of denials.",
+                size="half",
+                values=[
+                    PanelMetric(
+                        legend="""{{label}}""",
+                        metric="UniqueValueCount",
+                        metric_labels={"column": "denials", #column name
+                                       "value_type": "share"} 
+                    ),
+                ],
+                plot_params={"plot_type": "bar", "is_stacked": True},
+            ),
+            tab="My tab",
+        )
+```
+
+Use `metric_labels` when the metric has extra parameters and you want to narrow the values shown on the Panel. This includes:
+
+- **Column-level metrics**. As shown above.
+- **Metrics with multiple value types**. Some metrics return both `share` and `count` (e.g., `CategoryCount`). Use `{"value_type": "share"}` to specify.
+- **Metrics with extra configuration**. If a metric has configurable options (like drift method), include those in `metric_labels` to differentiate.
+
+Otherwise, all values for that metric will be plotted unless you also filter Reports by Tags.
+
+## All parameters
+
+### Dashboard Panel options
+
+| Parameter              | Type   | Required | Default  | Description                                                                               |
+| ---------------------- | ------ | -------- | -------- | ----------------------------------------------------------------------------------------- |
+| `title`                | `str`  | ❌        | `None`   | Title of the panel.                                                                       |
+| `description`          | `str`  | ❌        | `None`   | Optional panel description shown as a subtitle.                                           |
+| `size`                 | `str`  | ❌        | `"full"` | Panel size: `"full"` (100% width) or `"half"` (50%).                                      |
+| `values`               | `list` | ✅        | —        | List of `PanelMetric` objects to display.                                                 |
+| `tab`                  | `str`  | ❌        | `None`   | Dashboard tab name. If not set, defaults to the first tab or creates a new "General" tab. |
+| `create_if_not_exists` | `bool` | ❌        | `True`   | If `True`, creates the tab if it doesn't exist. Throws exception if `False`.              |
+| `plot_params`          | `dict` | ❌        | `{}`     | Panel visualization settings like `"plot_type"`: `"text"`, `"line"`, `"counter"`.         |
+
+### `PanelMetric` options
+
+| Parameter       | Type   | Required | Default | Description                                                                      |
+| --------------- | ------ | -------- | ------- | -------------------------------------------------------------------------------- |
+| `legend`        | `str`  | ❌        | `None`  | Legend name in the panel. If `None`, one is auto-generated.                      |
+| `tags`          | `list` | ❌        | `[]`    | Optional tags to select values only from a subset of Reports in the Project.     |
+| `metadata`      | `dict` | ❌        | `{}`    | Optional metadata to select values only from a subset of Reports in the Project. |
+| `metric`        | `str`  | ✅        | —       | Metric name (e.g., `"RowCount"` or `"servequery:metric_v2:MinValue"`).            |
+| `metric_labels` | `dict` | ❌        | `{}`    | Parameters like column names `{"column": "Col_name"}` or value types.            |

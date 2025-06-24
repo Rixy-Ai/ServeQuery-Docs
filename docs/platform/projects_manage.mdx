@@ -1,0 +1,105 @@
+---
+title: "Manage Projects"
+description: "Set up an evaluation or monitoring Project."
+---
+
+<Tip>
+  You must first connect to [ServeQuery Cloud](/docs/setup/cloud) (or your [local workspace](/docs/setup/self-hosting)).
+</Tip>
+
+## Create a Project
+
+<Tabs>
+  <Tab title="Python">
+    To create a Project inside a workspace `ws` and Organization with an `org_id`:
+
+    ```
+    project = ws.create_project("My test project", org_id="YOUR_ORG_ID")
+    project.description = "My project description"
+    project.save()
+    ```
+
+    In self-hosted open-source installation, you do not need to pass the Org ID. To create a Project:
+
+    ```
+    project = ws.create_project("My test project")
+    project.description = "My project description"
+    project.save()
+    ```
+  </Tab>
+
+  <Tab title="UI">
+    * **Create a Project.** Click on the “plus” sign on the home page, set a Project name and description.
+
+    * **Edit a Project**. To change the Project name or description, hover on the existing Project, click "edit" and make the changes.
+  </Tab>
+</Tabs>
+
+## Connect to a Project
+
+<Tip>
+  **Project ID**. You can see the Project ID above the monitoring Dashboard inside your Project.
+</Tip>
+
+To connect to an existing Project from Python, use the `get_project` method.
+
+```python
+project = ws.get_project("PROJECT_ID")
+```
+
+## Working with a Project
+
+### Save changes
+
+After making any changes to the Project (like editing description or adding monitoring Panels), always use the `save()` command:
+
+```python
+project.save()
+```
+
+### Browse Projects
+
+You can see all available Projects on the monitoring homepage, or request a list programmatically. To get a list of all Projects in a workspace `ws`, use:
+
+```python
+ws.list_projects()
+```
+
+To find a specific Project by its name, use the `search_project` method:
+
+```python
+ws.search_project("project_name")
+```
+
+### \[DANGER] Delete Project
+
+<Warning>
+  Deleting a Project deletes all the data inside it.
+</Warning>
+
+<Tabs>
+  <Tab title="Python">
+    To delete the Project:
+
+    ```
+    # ws.delete_project("PROJECT ID")
+    ```
+  </Tab>
+
+  <Tab title="UI">
+    Hover on the existing Project and click "delete".
+  </Tab>
+</Tabs>
+
+## Project parameters
+
+Each Project has the following parameters.
+
+| Parameter                                       | Description                                                                                     | Example                                                                                                                                                     |
+| ----------------------------------------------- | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name: str`                                     | Project name.                                                                                   | -                                                                                                                                                           |
+| `id: UUID4 = Field(default_factory=uuid.uuid4)` | Unique identifier of the Project. Assigned automatically.                                       | -                                                                                                                                                           |
+| `description: Optional[str] = None`             | Optional description. Visible when you browse Projects.                                         | -                                                                                                                                                           |
+| `dashboard: DashboardConfig`                    | Dashboard configuration that describes the composition of the monitoring Panels.                | See [Dashboard Design](dashboard_add_panels) for details. You don't need to explicitly pass `DashboardConfig` if you use the `.dashboard.add_panel` method. |
+| `date_from: Optional[datetime.datetime] = None` | Start DateTime of the monitoring Dashboard. By default it shows data for all available periods. | `datetime.now() + timedelta(-30)`                                                                                                                           |
+| `date_to: Optional[datetime.datetime] = None`   | End DateTime of the monitoring Dashboard.                                                       | Works the same as `date_from`.                                                                                                                              |
